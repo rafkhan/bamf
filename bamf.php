@@ -64,12 +64,12 @@ class Router {
  * TODO: Document this
  */
 class Template {
-	private $args;
 	private $file;
+	private $args;
 
-	public function __construct($a, $f) {
-		$this->args = $a;
+	public function __construct($f, $a) {
 		$this->file = $f;
+		$this->args = $a;
 	}
 
 	public function __get($key) {
