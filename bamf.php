@@ -23,8 +23,8 @@ class Router {
 	 * First this sanitizes the string, and then appends to
 	 * $this->uri_paths with the path as a key.
 	 *
-	 * @param   $path    string
-	 * @param   $action  hash
+	 * @param   $path    string    URI path to add
+	 * @param   $action  function  Function to execute on $path
 	 * @return  void
 	 */
 	public function add($path, $action) {
@@ -85,6 +85,101 @@ class Template {
 			include $this->file;
 		}
 	}	
+}
+
+class Database {
+
+	private $conn;
+
+	public function __construct($host, $user, $pw, $db) {
+		$this->conn = new mysqli($host, $user, $pw, $db);
+		$conn_err = $this->conn->connect_errno;
+		if($conn_err) {
+			throw new Exception($this->errnomsg . 'MySQL connection failed');
+		}
+	}
+
+	/*
+	 * Find single row
+	 *
+	 * Searches in $table for a single row.
+	 * Where the keys in $arg correspond to columns in $table and the values
+	 * at the keys are the values in the table.
+	 *
+	 * @param   string  $table  Table to search in
+	 * @param   hash    $arg    Hash keys are table columns
+	 * @return  hash            Keys are columns, values correspond to table
+	 *
+	 */
+	public function find_by($table, $arg) {
+		$query = "SELECT FROM $table WHERE ";
+		
+		$query = $query . $this->gen_find_by_query($arg);
+
+		echo $query;
+		echo '<br />';
+	}
+
+	/*
+	 * Find all rows
+	 *
+	 * This works exactly like Database::find_by
+	 *
+	 * @param   string  $table  Table to search in
+	 * @param   hash    $arg    Hash keys are table columns
+	 * @return  hash            Keys are columns, values correspond to table
+	 */
+	public function find_all_by($table, $arg) {
+		$query = "SELECT * FROM $table WHERE ";
+		
+		$query = $query . $this->gen_find_by_query($arg);
+
+		echo $query;
+		echo '<br />';
+	}
+
+	/*
+	 * The logic for find_by and find_all_by
+	 *
+	 * This generates a string in the form of:
+	 *  -> key1 = val1 AND key2 = val2
+	 * Where the keys and values are passed in a hash to the function
+	 *
+	 * @param   hash    $arg  Whatcha wanna find n stuff
+	 * @return  string        The rest of the SQL query!
+	 */
+	private function gen_find_by_query($arg) {
+		$count = count($arg) - 1;
+		$i = 0;
+
+		$query = '';
+		foreach($arg as $key => $val) {
+			$query = $query . "$key = $val ";
+			if($i < $count) {
+				$query = $query . 'AND ';
+			}
+			$i++;
+		}
+
+		return $query;
+	}
+
+	/*
+	 * @param  string  Query as a prepared statement
+	 * @return mysqli_stmt
+	 */
+	private function stmt_prepare($q) {
+		if($stmt = $this->conn->prepare($q)) {
+			return $stmt;
+		} else {
+			throw new Exception($this->errnomsg . 'Failed preparing query');
+		}
+	}
+
+	private function errnomsg() {
+		return '[ERRNO: '.$this->conn->errno.'] ';
+	}
+
 }
 
 /*
