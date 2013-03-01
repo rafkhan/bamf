@@ -1,6 +1,7 @@
 <?php
 
 require('bamf.php');
+require('dbamf.php');
 
 $r = new Router();
 
@@ -17,8 +18,9 @@ $r->add('/bamf/asd', function() {
 		'zxc' => 3.14159
 	);
 
-	$db = new Database('127.0.0.1', 'root', '', 'chm');
-	$db->find_all_by('chm_categories', $ar);
+	$db = new DBamf('127.0.0.1', 'root', '', 'chm');
+	$db->select('chm_categories', array('qwe','asd','zxc'), 
+	  array('rty' => 'fgh', 'vbn' => 'uio'));
 
 	$t = new Template('testplate.php', $ar);
 	$t->render();
