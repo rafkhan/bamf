@@ -1,7 +1,7 @@
 <?php
 
 /*
- * TODO: Describe this class?
+ * TODO: Describe this class
  */
 class Router {
 
@@ -61,7 +61,7 @@ class Router {
 }
 
 /*
- * TODO: Document this
+ * Renders templates and doesn't afraid of anything
  */
 class Template {
 	private $file;
@@ -99,80 +99,70 @@ class Database {
 		}
 	}
 
-	/*
-	 * Find single row
-	 *
-	 * Searches in $table for a single row.
-	 * Where the keys in $arg correspond to columns in $table and the values
-	 * at the keys are the values in the table.
-	 *
-	 * @param   string  $table  Table to search in
-	 * @param   hash    $arg    Hash keys are table columns
-	 * @return  hash            Keys are columns, values correspond to table
-	 *
-	 */
-	public function find_by($table, $arg) {
-		$query = "SELECT * FROM $table WHERE ";
-		
-		$query = $query . $this->find_prep_stmt($arg);
-		$types = $this->gen_find_by_types($arg);
+	public function select($table, $find, $args) {
+		$q = $this->select_query_gen($table, $find, $args);
+		$stmt = $this->stmt_prepare($q);
+		$res = $this->stmt_exec($stmt, $this->stmt_types($args), $args);
+		print_r($res->fetch_assoc());
+		echo "<br />";
+	}
 
-		try {
-			$stmt = $this->stmt_prepare($query);
-			$this->stmt_exec($stmt, $types, array('asd', 'qwe', 1, 3.14159));
-		} catch(Exception $e) {
-			echo $this->conn->error . "<br />";
+	/*
+	 * Generates paramaterized query for SELECT
+	 *
+	 * @param  string      $table  The table to search in
+	 * @param  str || arr  $find   The column(s) you want to search in
+	 * @param  hash        $args
+	 */
+	private function select_query_gen($table, $find, $args) {
+		$q = 'SELECT ';
+
+		/*
+		 * Figure out what to select for. If it's an array, the user is
+		 * lookind for multiple columns. If it's a string, the user is
+		 * looking for the column specified in the string.
+		 */
+		$find_type = gettype($find);
+		if($find_type == 'array') {
+			$c = count($find);
+			for($i = 0; $i < $c; $i++) {
+				$q .= $find[$i];
+				if($i < $c - 1) {
+					$q .= ', ';
+				} else {
+					$q .= ' ';
+				}
+			}
+		} elseif($find_type == 'string') {
+			$q .= "$find ";
 		}
-		
 
-		echo $query;
-		echo '<br />';
-	}
+		$q .= "FROM $table WHERE ";
 
-	/*
-	 * Find all rows
-	 *
-	 * This works exactly like Database::find_by()
-	 *
-	 * @param   string  $table  Table to search in
-	 * @param   hash    $arg    Hash keys are table columns
-	 * @return  hash            Keys are columns, values correspond to table
-	 */
-	public function find_all_by($table, $arg) {
-		$query = "SELECT * FROM $table WHERE ";
-		
-		$query = $query . $this->find_prep_stmt($arg);
-
-		echo $query;
-		echo '<br />';
-	}
-
-	/*
-	 * Make prepared statement template for find_by() and find_all_by()
-	 *
-	 *
-	 * This generates a string in the form of:
-	 *  -> key1 = (?) AND key2 = (?) 
-	 * Where the keys are those of a hash passed to the function. This is
-	 * used to generate the template for a prepared statement.
-	 *
-	 * @param   hash    $arg  The keys in this hash are used
-	 * @return  string        Prepared statement template bit
-	 */
-	private function find_prep_stmt($arg) {
-		$count = count($arg) - 1;
+		$c = count($args);
 		$i = 0;
-
-		$query = '';
-		foreach($arg as $key => $val) {
-			$query = $query . "$key = (?) ";
-			if($i < $count) {
-				$query = $query . 'AND ';
+		foreach($args as $k => $v) {
+			$q .= "$k = (?) ";
+			if($i < $c - 1) {
+				$q .= 'AND ';
 			}
 			$i++;
 		}
+		echo $q . '<br />';
+		return $q;
+	}
 
-		return $query;
+	/*
+	 * @param   string  Query as a prepared statement
+	 * @return  mysqli_stmt
+	 */
+	private function stmt_prepare($q) {
+		if($stmt = $this->conn->prepare($q)) {
+			return $stmt;
+		} else {
+			throw new Exception($this->errnomsg() . 'Failed preparing query: '
+			   . $this->conn->error);
+		}
 	}
 
 	/*
@@ -185,18 +175,18 @@ class Database {
 	 * @param   hash    $arg  Finds the types of the values in this
 	 * @return  string        Type string for bind_param() 
 	 */
-	private function gen_find_by_types($arg) {
+	private function stmt_types($arg) {
 		$t = '';
 		foreach($arg as $val) {
 			switch(gettype($val)) {
 			case 'integer':
-				$t = $t . 'i';
+				$t .= 'i';
 				break;
 			case 'double':
-				$t = $t . 'd';
+				$t .= 'd';
 				break;
 			case 'string':
-				$t = $t . 's';
+				$t .= 's';
 				break;
 			}
 		}
@@ -204,49 +194,36 @@ class Database {
 	}
 
 	/*
-	 * @param   string  Query as a prepared statement
-	 * @return  mysqli_stmt
-	 */
-	private function stmt_prepare($q) {
-		if($stmt = $this->conn->prepare($q)) {
-			return $stmt;
-		} else {
-			throw new Exception($this->errnomsg() . 'Failed preparing query');
-		}
-	}
-
-	/*
-	 * @param   mysqli_stmt  $stmt   MySQLi statement to execute
-	 * @param   string       $types  Type string to be bound
-	 * @param   array        $vals   Array of values to be bound
-	 * @return  bool
+	 * @param   mysqli_stmt    $stmt   MySQLi statement to execute
+	 * @param   string         $types  Type string to be bound
+	 * @param   array          $vals   Array of values to be bound
+	 * @return  mysqli_result
 	 */
 	private function stmt_exec($stmt, $types, $vals) {
-		array_unshift($vals, $types);
-		if(!call_user_func_array(array($stmt, 'bind_param'), $vals)) {
+		array_unshift($vals, $types); //prepend $types with $value
+
+		$ref_vals = array();
+		foreach($vals as $k => $v) {
+			$ref_vals[$k] = &$vals[$k];
+		}
+
+		if(call_user_func_array(array($stmt, 'bind_param'), $ref_vals)) {
+			if($stmt->execute()) {
+				return $stmt->get_result();
+			} else {
+				throw new Exception($this->errnomsg() . 
+					'Failed executing prepared stmt');
+			}
+		} else {
 			throw new Exception($this->errnomsg() . 
 				'Failed executing prepared stmt');
-		}
+		}	
 	}
 
 	private function errnomsg() {
 		return '[ERRNO: '.$this->conn->errno.'] ';
 	}
-
-}
-
-/*
- * TODO: Document this
- */
-class Util {
-
-	public static function sanitize_input_str($str) {
-		if(get_magic_quotes_gpc()) {
-			$str = stripslashes($str);
-		}
-		return htmlentities(mysql_real_escape_string($str));
-	}
-
 }
 
 ?>
+

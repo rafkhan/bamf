@@ -19,8 +19,8 @@ $r->add('/bamf/asd', function() {
 	);
 
 	$db = new DBamf('127.0.0.1', 'root', '', 'chm');
-	$db->select('chm_categories', array('qwe','asd','zxc'), 
-	  array('rty' => 'fgh', 'vbn' => 'uio'));
+	$db->select('chm_images', array('title','description','image_href'), 
+	  array('cat_id' => 12));
 
 	$t = new Template('testplate.php', $ar);
 	$t->render();
