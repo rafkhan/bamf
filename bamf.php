@@ -99,12 +99,34 @@ class Database {
 		}
 	}
 
+	/*
+	 * TODO: Document
+	 */
 	public function select($table, $find, $args) {
-		$q = $this->select_query_gen($table, $find, $args);
-		$stmt = $this->stmt_prepare($q);
-		$res = $this->stmt_exec($stmt, $this->stmt_types($args), $args);
+		$q = $this->select_query($table, $find, $args);
+		$res = $this->query_stmt($q, $args);
+		echo "$q<br />";
 		print_r($res->fetch_assoc());
-		echo "<br />";
+	}
+
+	/*
+	 * TODO: Documemt
+	 */
+	public function insert($table, $args) {
+		$q = $this->insert_query($table, $args);
+		echo "$q<br />";
+		$res = $this->query_stmt($q, $args);
+	}
+
+	/*
+	 * Executes a prepared statement query,
+	 * subs in $args
+	 *
+	 * todo: doc
+	 */
+	public function query_stmt($query, $args) {
+		$stmt = $this->stmt_prepare($query);
+		return $this->stmt_exec($stmt, $this->stmt_types($args), $args);
 	}
 
 	/*
@@ -114,7 +136,7 @@ class Database {
 	 * @param  str || arr  $find   The column(s) you want to search in
 	 * @param  hash        $args
 	 */
-	private function select_query_gen($table, $find, $args) {
+	private function select_query($table, $find, $args) {
 		$q = 'SELECT ';
 
 		/*
@@ -151,6 +173,38 @@ class Database {
 		echo $q . '<br />';
 		return $q;
 	}
+
+	/*
+	 * TODO: Document
+	 */
+	private function insert_query($table, $args) {
+		$q = "INSERT INTO $table (";
+
+		$c = count($args);
+		$i = 0;
+		foreach($args as $k => $v) {
+			$q .= $k;
+			if($i < $c - 1) {
+				$q .= ',';
+			}
+			$i++;
+		}
+
+		$q .= ') VALUES (';
+
+		$i = 0;
+		foreach($args as $k => $v) {
+			$q .= '(?)';
+			if($i < $c - 1) {
+				$q .= ',';
+			}
+			$i++;
+		}
+
+		$q .= ')';
+		return $q;
+	}
+
 
 	/*
 	 * @param   string  Query as a prepared statement
@@ -202,6 +256,11 @@ class Database {
 	private function stmt_exec($stmt, $types, $vals) {
 		array_unshift($vals, $types); //prepend $types with $value
 
+		/*
+		 * I honestly have no idea why I need to do this.
+		 * You have to assign the values in the new array to be references
+		 * to the items in the old array.
+		 */
 		$ref_vals = array();
 		foreach($vals as $k => $v) {
 			$ref_vals[$k] = &$vals[$k];
@@ -221,7 +280,7 @@ class Database {
 	}
 
 	private function errnomsg() {
-		return '[ERRNO: '.$this->conn->errno.'] ';
+		return '[ERRNO: '.$this->conn->errno.'] ' . $this->conn->error . ' ';
 	}
 }
 
