@@ -192,13 +192,11 @@ class Database {
 
 		$q .= ') VALUES (';
 
-		$i = 0;
-		foreach($args as $k => $v) {
+		for($i = 0; $i < $c; $i++) {
 			$q .= '(?)';
 			if($i < $c - 1) {
 				$q .= ',';
 			}
-			$i++;
 		}
 
 		$q .= ')';

@@ -1,34 +1,39 @@
 <?php
 
 require('bamf.php');
+require('router3.php');
 
-$r = new Router();
+$r = new Router3();
 
-$r->add('/bamf/', function() {
-	echo "hello";
+$r->add('/', function() {
+	echo "asdasdasfnao";
 });
 
 $r->add('/bamf/asd', function() {
-
-	$ar = array(
-		'foo' => 'bar',
-		'baz' => 'qux',
-		'qwe' => 1,
-		'zxc' => 3.14159
-	);
-
+	
 	$db = new Database('127.0.0.1', 'root', '', 'chm');
 
-	/*
 	$db->select('chm_images', array('title','description','image_href'), 
-	             array('cat_id' => 12));
-	$db->insert('chm_images', array('cat_id' => 7, 'title' => "seven"));
-	 */
+	array('cat_id' => 12));
+//	$db->insert('chm_images', array('cat_id' => 7, 'title' => "seven"));
 
-	$t = new Template('testplate.php', $ar);
-	$t->render();
+//	$t = new Template('testplate.php', $ar);
+	//$t->render();
 });
 
+
+
+$r->add('/bamf/route/asd', function() {
+	echo "woah";	
+});
+
+$r->add('/bamf/route/clit', function() {
+	echo "asd";
+});
+
+$r->add('/bamf/route/word', function() {
+	echo "asd";
+});
 
 $r->route();
 
