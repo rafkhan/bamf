@@ -11,6 +11,12 @@ class Router {
 		$this->path_tree = new RNode();
 	}
 
+	/*
+	 * Add function to the path tree.
+	 *
+	 * @param string $path
+	 * @param function $func
+	 */
 	public function add($path, $func) {
 		$path_arr = $this->parse_uri($path);
 		$this->add_path($this->path_tree, $path_arr, $func);
@@ -18,12 +24,19 @@ class Router {
 		echo '<br /><br />';
 	}
 
+	/*
+	 * Execute the function on the path the user navigated too.
+	 */
 	public function route() {
 		$path = $_SERVER['REQUEST_URI'];
 		$path_arr = $this->parse_uri($path);
 		$this->route_path($this->path_tree, $path_arr);
 	}
 
+	/*
+	 * Traverses the path tree and executes the function at the
+	 * endpoint. 404s if no action at endpoint
+	 */
 	private function route_path(&$parent, $path) {
 		$path_seg = array_shift($path);
 		if($path_seg == NULL) {
@@ -42,6 +55,13 @@ class Router {
 		}
 	}
 
+	/*
+	 * Recursively traverses the tree, creates non-existant nodes, and assigns
+	 * function to the endpoint.
+	 *
+	 * @param RNode &$parent The parent node to append action or other node to.
+	 * @param Array $path An array of path segment strings
+	 */
 	private function add_path(&$parent, $path, $func) {
 		$path_seg = array_shift($path);
 		if($path_seg == NULL) {
@@ -53,7 +73,11 @@ class Router {
 			$this->add_path($child, $path, $func);
 		}
 	}
-	
+
+	/*
+	 * Splits the URI at '/', removes empty elements, and looks for
+	 * varargs in the URI.
+	 */
 	private function parse_uri($path) {
 		$tokens = explode('/', $path);
 
