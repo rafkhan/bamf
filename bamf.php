@@ -1,5 +1,8 @@
 <?php
 
+/*
+ * TODO: 404
+ */
 class Router {
 	
 	private $path_tree;
@@ -57,6 +60,8 @@ class Router {
 		foreach($tokens as $k => $v) {
 			if($v == '') {
 				unset($tokens[$k]);
+			} elseif($v == '@') {
+				//TODO: set key for variable args
 			}
 		}
 		array_values($tokens);
@@ -93,6 +98,7 @@ class RNode {
 		return $this->action;
 	}
 }
+
 /*
  * Renders templates and doesn't afraid of anything
  */

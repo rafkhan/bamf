@@ -1,9 +1,8 @@
 <?php
 
 require('bamf.php');
-require('router3.php');
 
-$r = new Router3();
+$r = new Router();
 
 $r->add('/', function() {
 	echo "asdasdasfnao";
@@ -17,8 +16,9 @@ $r->add('/bamf/asd', function() {
 	array('cat_id' => 12));
 //	$db->insert('chm_images', array('cat_id' => 7, 'title' => "seven"));
 
-//	$t = new Template('testplate.php', $ar);
-	//$t->render();
+	$ar = array('foo' => 'FOOO', 'baz' => 'BAAAZ');
+	$t = new Template('testplate.php', $ar);
+	$t->render();
 });
 
 
