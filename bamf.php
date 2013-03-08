@@ -34,8 +34,11 @@ class Router {
 	}
 
 	/*
-	 * Traverses the path tree and executes the function at the
+	 * Recursively traverses the path tree and executes the function at the
 	 * endpoint. 404s if no action at endpoint
+	 *
+	 * @param RNode &$parent  Parent node to search in
+	 * @param Array $path  Array of path segments (Strings)
 	 */
 	private function route_path(&$parent, $path) {
 		$path_seg = array_shift($path);
@@ -59,8 +62,8 @@ class Router {
 	 * Recursively traverses the tree, creates non-existant nodes, and assigns
 	 * function to the endpoint.
 	 *
-	 * @param RNode &$parent The parent node to append action or other node to.
-	 * @param Array $path An array of path segment strings
+	 * @param RNode &$parent  The parent node to append action or other node to.
+	 * @param Array $path  Array of path segment (strings)
 	 */
 	private function add_path(&$parent, $path, $func) {
 		$path_seg = array_shift($path);
@@ -77,6 +80,9 @@ class Router {
 	/*
 	 * Splits the URI at '/', removes empty elements, and looks for
 	 * varargs in the URI.
+	 *
+	 * @param string $path
+	 * @return Array
 	 */
 	private function parse_uri($path) {
 		$tokens = explode('/', $path);
@@ -154,6 +160,9 @@ class Database {
 
 	private $conn;
 
+	/*
+	 * TODO: Docs
+	 */
 	public function __construct($host, $user, $pw, $db) {
 		$this->conn = new mysqli($host, $user, $pw, $db);
 		$conn_err = $this->conn->connect_errno;
@@ -195,9 +204,9 @@ class Database {
 	/*
 	 * Generates paramaterized query for SELECT
 	 *
-	 * @param  string      $table  The table to search in
-	 * @param  str || arr  $find   The column(s) you want to search in
-	 * @param  hash        $args
+	 * @param string $table  The table to search in
+	 * @param string|array $find   The column(s) you want to search in
+	 * @param hash $args //TODO: add shit here
 	 */
 	private function select_query($table, $find, $args) {
 		$q = 'SELECT ';
@@ -268,8 +277,8 @@ class Database {
 
 
 	/*
-	 * @param   string  Query as a prepared statement
-	 * @return  mysqli_stmt
+	 * @param string  Query as a prepared statement
+	 * @return mysqli_stmt
 	 */
 	private function stmt_prepare($q) {
 		if($stmt = $this->conn->prepare($q)) {
@@ -287,8 +296,8 @@ class Database {
 	 * contains the types of variables which are to be bound by the prepared
 	 * statement. 
 	 *
-	 * @param   hash    $arg  Finds the types of the values in this
-	 * @return  string        Type string for bind_param() 
+	 * @param hash $arg  Finds the types of the values in this
+	 * @return string  Type string for bind_param() 
 	 */
 	private function stmt_types($arg) {
 		$t = '';
@@ -309,10 +318,10 @@ class Database {
 	}
 
 	/*
-	 * @param   mysqli_stmt    $stmt   MySQLi statement to execute
-	 * @param   string         $types  Type string to be bound
-	 * @param   array          $vals   Array of values to be bound
-	 * @return  mysqli_result
+	 * @param mysqli_stmt $stmt  MySQLi statement to execute
+	 * @param string $types  Type string to be bound
+	 * @param array $vals  Array of values to be bound
+	 * @return mysqli_result
 	 */
 	private function stmt_exec($stmt, $types, $vals) {
 		array_unshift($vals, $types); //prepend $types with $value
@@ -346,4 +355,3 @@ class Database {
 }
 
 ?>
-
