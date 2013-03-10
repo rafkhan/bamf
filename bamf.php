@@ -40,7 +40,7 @@ class Router {
 	 * @param RNode &$parent  Parent node to search in
 	 * @param Array $path  Array of path segments (Strings)
 	 */
-	private function route_path(&$parent, $path) {
+	private function route_path(&$parent, $path, $args = []) {
 		$path_seg = array_shift($path);
 		if($path_seg == NULL) {
 			$func = $parent->get_action();
@@ -51,6 +51,8 @@ class Router {
 			}
 		} else {
 			if($child = $parent->get_child($path_seg)) {
+				$this->route_path($child, $path);
+			} elseif($child = $parent->get_var_child()) {
 				$this->route_path($child, $path);
 			} else {
 				echo "<strong><h1>404 ERROR</h1></strong><br />";
@@ -70,8 +72,14 @@ class Router {
 		if($path_seg == NULL) {
 			$parent->set_action($func);
 		} else {
-			if(!($child = $parent->get_child($path_seg))) {
-				$child = $parent->add_child($path_seg);
+			if($path_seg == '@') {
+				if(!($child = $parent->get_var_child())) {
+					$child = $parent->add_var_child();
+				}
+			} else {
+				if(!($child = $parent->get_child($path_seg))) {
+					$child = $parent->add_child($path_seg);
+				}
 			}
 			$this->add_path($child, $path, $func);
 		}
@@ -90,8 +98,6 @@ class Router {
 		foreach($tokens as $k => $v) {
 			if($v == '') {
 				unset($tokens[$k]);
-			} elseif($v == '@') {
-				//TODO: set key for variable args
 			}
 		}
 		array_values($tokens);
@@ -104,6 +110,7 @@ class RNode {
 
 	private $action;
 	private $children = NULL;
+	private $var_child = NULL;
 
 	public function get_child($child_name) {
 		if($this->children != NULL) {
@@ -118,6 +125,19 @@ class RNode {
 	public function add_child($name) {
 		$this->children[$name] = new RNode();
 		return $this->children[$name];
+	}
+
+	public function get_var_child() {
+		if($this->var_child != NULL) {
+			return $this->var_child;
+		} else {
+			return FALSE;
+		}
+	}
+
+	public function add_var_child() {
+		$this->var_child = new RNode();
+		return $this->var_child;
 	}
 
 	public function set_action($act) {
@@ -172,7 +192,9 @@ class Database {
 	}
 
 	/*
-	 * TODO: Document
+	 * @param string $table
+	 * @param array $find  list of columns to return
+	 * @param hash $args  selects where key = val
 	 */
 	public function select($table, $find, $args) {
 		$q = $this->select_query($table, $find, $args);
@@ -182,7 +204,8 @@ class Database {
 	}
 
 	/*
-	 * TODO: Documemt
+	 * @param string $table
+	 * @param hash $args  hash key = column, hash val = value to insert
 	 */
 	public function insert($table, $args) {
 		$q = $this->insert_query($table, $args);

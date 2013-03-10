@@ -23,17 +23,10 @@ $r->add('/bamf/asd', function() {
 
 
 
-$r->add('/bamf/route/asd', function() {
+$r->add('/bamf/asd/@/2/@', function() {
 	echo "woah";	
 });
 
-$r->add('/bamf/route/clit', function() {
-	echo "asd";
-});
-
-$r->add('/bamf/route/word', function() {
-	echo "asd";
-});
 
 $r->route();
 
