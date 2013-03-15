@@ -23,8 +23,8 @@ $r->add('/bamf/asd', function() {
 
 
 
-$r->add('/bamf/asd/@/2/@', function() {
-	echo "woah";	
+$r->add('/bamf/asd/@/2/@', function($a) {
+	print_r($a);
 });
 
 

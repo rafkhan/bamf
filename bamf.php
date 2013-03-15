@@ -39,21 +39,23 @@ class Router {
 	 *
 	 * @param RNode &$parent  Parent node to search in
 	 * @param Array $path  Array of path segments (Strings)
+	 * @param Array $args  TODO
 	 */
 	private function route_path(&$parent, $path, $args = []) {
 		$path_seg = array_shift($path);
 		if($path_seg == NULL) {
 			$func = $parent->get_action();
 			if($func != NULL) {
-				call_user_func($func);
+				call_user_func($func, $args);
 			} else {
 				echo "<strong><h1>404 ERROR</h1></strong><br />";
 			}
 		} else {
 			if($child = $parent->get_child($path_seg)) {
-				$this->route_path($child, $path);
+				$this->route_path($child, $path, $args);
 			} elseif($child = $parent->get_var_child()) {
-				$this->route_path($child, $path);
+				array_push($args, $path_seg);
+				$this->route_path($child, $path, $args);
 			} else {
 				echo "<strong><h1>404 ERROR</h1></strong><br />";
 			}
